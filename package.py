@@ -10,7 +10,7 @@ from argparse import Namespace
 from subprocess import check_call
 from typing import Dict, List, Optional
 
-SCALELIB_VERSION = "0.2.11"
+SCALELIB_VERSION = "0.2.13"
 CYCLECLOUD_API_VERSION = "8.1.0"
 
 
@@ -140,9 +140,6 @@ def execute() -> None:
             assert False
 
     for fil in os.listdir(build_dir):
-        if fil.startswith("certifi-20"):
-            print("WARNING: Ignoring duplicate certifi {}".format(fil))
-            continue
         path = os.path.join(build_dir, fil)
         _add("packages/" + fil, path)
 
