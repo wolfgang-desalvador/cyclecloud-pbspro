@@ -7,9 +7,9 @@ include_recipe 'pbspro::default'
 pbsprover = node[:pbspro][:version]
 plat_ver = node['platform_version'].to_i
 pbsdist = "el#{plat_ver}"
-pbs_commercial = node[:pbspro][:commercial]
+pbs_professional = node[:pbspro][:professional]
 
-if pbs_commercial
+if pbs_professional
     package_name = "pbspro-server-#{pbsprover}.#{pbsdist}.x86_64.rpm"
 else
   if pbsprover.to_i < 20 
@@ -23,7 +23,7 @@ jetpack_download package_name do
   project 'pbspro'
 end
 
-if pbs_commercial
+if pbs_professional
   user 'pbsdata' do
     system true
     manage_home true
@@ -71,7 +71,7 @@ service "pbs" do
   action [:enable, :start]
 end
 
-if pbs_commercial
+if pbs_professional
 pbspro_license = node[:pbspro][:license]
   bash 'setup license cyclecloud-pbspro' do
     code <<-EOH

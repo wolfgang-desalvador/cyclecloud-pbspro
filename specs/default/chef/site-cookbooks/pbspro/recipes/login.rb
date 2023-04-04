@@ -7,9 +7,9 @@ include_recipe 'pbspro::default'
 pbsprover = node[:pbspro][:version]
 plat_ver = node['platform_version'].to_i
 pbsdist = "el#{plat_ver}"
-pbs_commercial = node[:pbspro][:commercial]
+pbs_professional = node[:pbspro][:professional]
 
-if pbs_commercial
+if pbs_professional
   package_name = "pbspro-client-#{pbsprover}.#{pbsdist}.x86_64.rpm"
 else
   if pbsprover.to_i < 20 
