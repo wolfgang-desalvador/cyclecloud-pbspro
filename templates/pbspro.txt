@@ -405,8 +405,8 @@ Order = 20
         [[[parameter PBSVersion]]]
         Label = Altair PBS Version
         Config.Plugin = pico.form.Dropdown
-        Config.Entries := {[Label="Altair PBS Pro 2022.1"; Value="2022.1.1"]}
-        DefaultValue = 2022.1.1
+        Config.Entries := {[Label="Altair PBS Pro 2022.1.1"; Value="2022.1.1"], [Label="Altair PBS Pro 2022.1.4"; Value="2022.1.4"]}
+        DefaultValue = 2022.1.4
 
         [[[parameter PBSLicenseServer]]]
         Label = Altair License Server location
