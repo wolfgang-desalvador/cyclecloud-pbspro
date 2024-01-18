@@ -1,0 +1,337 @@
+
+################################
+## Cluster Configuration File ##
+################################
+
+[cluster Altair PBS Professional]
+FormLayout = selectionpanel
+Category = Schedulers
+IconURL="static/cloud/cluster/ui/ClusterIcon/altair-icon.png"
+
+Autoscale = $Autoscale
+
+    [[node defaults]]
+    UsePublicNetwork = $UsePublicNetwork
+    Credentials = $Credentials    
+    ImageName = $ImageName
+    SubnetId = $SubnetId
+    Region = $Region
+    KeyPairLocation = ~/.ssh/cyclecloud.pem
+    Azure.Identities = $ManagedIdentity
+    
+        [[[configuration]]]
+        pbspro.version = $PBSVersion
+        pbspro.professional = true
+        pbspro.license = $PBSLicenseServer
+        # For fast spin-up after Deallocate, force an immediate re-converge on boot
+        cyclecloud.converge_on_boot = true
+
+        # Disable normal NFS exports and mounts
+        cyclecloud.mounts.sched.disabled = true
+        cyclecloud.mounts.shared.disabled = true
+        cyclecloud.exports.sched.disabled = true
+        cyclecloud.exports.shared.disabled = true
+        cyclecloud.exports.sched.samba.enabled = false
+        cyclecloud.exports.shared.samba.enabled = false
+        cyclecloud.exports.defaults.samba.enabled = false      
+        cshared.server.legacy_links_disabled = true
+
+        # May be used to identify the ID in cluster-init scripts
+        cluster.identities.default = $ManagedIdentity
+	
+        [[[cluster-init cyclecloud/pbspro:default]]]
+        Optional = false
+
+
+        [[[volume boot]]]
+        Size = ${ifThenElse(BootDiskSize > 0, BootDiskSize, undefined)}
+        SSD = True
+
+        [[[configuration cyclecloud.mounts.nfs_shared]]]
+        type = nfs
+        mountpoint = /shared
+        export_path = $NFSSharedExportPath
+        address = $NFSAddress
+        options = $NFSSharedMountOptions
+
+        [[[configuration cyclecloud.mounts.nfs_sched]]]
+        type = nfs
+        mountpoint = /sched
+        disabled = true
+
+        [[[configuration cyclecloud.mounts.additional_nfs]]]
+        disabled = false
+        type = nfs
+        address = $AdditonalNFSAddress
+        mountpoint = $AdditionalNFSMountPoint
+        export_path = $AdditionalNFSExportPath
+        options = $AdditionalNFSMountOptions
+
+
+    [[nodearray execute]]
+    MachineType = $ExecuteMachineType
+    MaxCoreCount = $MaxExecuteCoreCount
+
+    Interruptible = $UseLowPrio
+    AdditionalClusterInitSpecs = $ExecuteClusterInitSpecs
+    EnableNodeHealthChecks = $EnableNodeHealthChecks
+
+
+        [[[configuration]]]
+        # setting this completely disables the autoscaler from adding nodes to the cluster
+        # even manually created nodes. Instead, you can add this to your autoscale.json 
+        # {"pbspro": {"ignore_queues": ["workq", "htcq"]}}
+        # which is what pbspro.queues.workq.ignore does as well.
+        # autoscale.enabled = $Autoscale
+        
+        [[[cluster-init cyclecloud/pbspro:execute]]]
+
+        [[[network-interface eth0]]]
+        AssociatePublicIpAddress = $ExecuteNodesPublic
+
+
+[parameters About]
+Order = 1
+
+   [[parameters About Altair PBS Professional]]
+
+        [[[parameter pbspro]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template = '''<table role="presentation"> <tr><td> <a> <img width="512" alt="Altair logo" src="static/cloud/cluster/ui/ClusterIcon/altair.png"> </a>  </td></tr> 
+                                <tr> <td> <p>&nbsp;</p> </td></tr> 
+                                <tr><td><big><b>Thank you for trying Altair&#0174 PBS Professional&#0174! </big> </b></td></tr> 
+                                <tr><td><p>Altair&#0174 PBS Professional&#0174 is a fast, powerful workload manager designed to improve productivity and optimize utilization 
+                                           and efficiency on-premises or in the cloud. PBS Professional automates job scheduling, management, monitoring, and reporting for an optimized HPC environment 
+                                           anywhere. Unlock the power of PBS Professional in the cloud for breakthrough results.</p>
+                                         </td></tr> 
+                                         <tr> <td> <p>&nbsp;</p> </td></tr> 
+                                         <tr><td> <p> <big><b>Additional Altair&#0174 PBS Professional&#0174 Resources: </big> </b></p></td></tr> 
+                                         <tr><td><ul>
+                                            <li><a href="https://www.altair.com/pbs-professional/">Altair PBS Professional Product Page </li>
+                                            <li><a href="https://www.altair.com/resource/hpc-cloud-applications">Altair for HPC and Cloud </li>
+                                            <li><a href="https://www.altair.com/resourcelibrary/">Altair Development and Release Activity </li></ul> </td></tr></table>'''
+
+
+[parameters Required Settings]
+Order = 10
+
+    [[parameters Virtual Machines ]]
+    Description = "The cluster, in this case, has two roles: the scheduler server-node with shared filer and the execute hosts. Configure which VM types to use based on the requirements of your application."
+    Order = 20
+
+        [[[parameter Region]]]
+        Label = Region
+        Description = Deployment Location
+        ParameterType = Cloud.Region
+
+        [[[parameter ExecuteMachineType]]]
+        Label = Execute VM Type
+        Description = The VM type for execute nodes
+        ParameterType = Cloud.MachineType
+        DefaultValue = Standard_F2s_v2
+        Config.Multiselect = true
+
+
+    [[parameters Auto-Scaling]]
+    Description = "The cluster can autoscale to the workload, adding execute hosts as jobs are queued. To enable this, check the box below and choose the initial and maximum core counts for the cluster."
+    Order = 30
+
+        [[[parameter Autoscale]]]
+        Label = Autoscale
+        DefaultValue = true
+        Widget.Plugin = pico.form.BooleanCheckBox
+        Widget.Label = Start instances automatically. Shutdown is determined by Keep Alive.
+
+        [[[parameter AzpbsCronMethod]]]
+        Label = Cron Method
+        DefaultValue = cron
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="Cron"; Value="cron"], [Label="PBS Timer Hook"; Value="pbs_hook"]}
+        Config.Options = cron,pbs_hook
+        Description = "The method used to run the azpbs cron job.  Cron is the default and will run the azpbs cron job 15 seconds.  The pbs_hook method will do the same but use PBS built-in timer."
+
+        [[[parameter MaxExecuteCoreCount]]]
+        Label = Max Cores
+        Description = The total number of execute cores to start
+        DefaultValue = 100
+        Config.Plugin = pico.form.NumberTextBox
+        Config.MinValue = 1
+        Config.IntegerOnly = true
+
+        [[[parameter UseLowPrio]]]
+        Label = Low Priority
+        DefaultValue = false
+        Widget.Plugin = pico.form.BooleanCheckBox
+        Widget.Label = Use low priority instances for execute hosts
+
+    [[parameters Networking]]
+    Order = 40
+
+        [[[parameter SubnetId]]]
+        Label = Subnet ID
+        Description = Subnet Resource Path (ResourceGroup/VirtualNetwork/Subnet)
+        ParameterType = Azure.Subnet
+        Required = True
+
+[parameters Network Attached Storage]
+Order = 15
+
+
+
+    [[parameters Default NFS Share]]
+    Order = 10
+        [[[parameter About shared]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template := "<p>The directory <code>/shared</code> is a network attached mount and exists in all nodes of the cluster. Users' home directories reside within this mountpoint with the base homedir <code>/shared/home</code>.<br><br>There are two options for providing this mount:<br> <strong>[Builtin]</strong>: The scheduler node is an NFS server that provides the mountpoint to the other nodes of the cluster.<br> <strong>[External NFS]</strong>: A network attached storage such as Azure Netapp Files, HPC Cache, or another VM running an NFS server, provides the mountpoint.</p><p>Note: the cluster must be terminated for this to take effect.</p>"
+        Order = 20
+
+        [[[parameter NFSAddress]]]
+        Label = NFS IP Address
+        Description = The IP address or hostname of the NFS server. Also accepts a list comma-separated addresses, for example, to mount a frontend load-balanced Azure HPC Cache.
+        Config.ParameterType = String
+
+        [[[parameter NFSSharedExportPath]]]
+        Label = Shared Export Path
+        Description = The path exported by the file system
+        DefaultValue = /shared
+
+        [[[parameter NFSSharedMountOptions]]]
+        Label = NFS Mount Options
+        Description = NFS Client Mount Options
+
+
+    [[parameters Default NFS Sched]]
+    Order = 20
+        [[[parameter About Sched]]]
+        HideLabel = true
+        Config.Plugin = pico.widget.HtmlTemplateWidget
+        Config.Template := "<p>The directory <code>/shared</code> is a network attached mount and exists in all nodes of the cluster. Users' home directories reside within this mountpoint with the base homedir <code>/shared/home</code>.<br><br>There are two options for providing this mount:<br> <strong>[Builtin]</strong>: The scheduler node is an NFS server that provides the mountpoint to the other nodes of the cluster.<br> <strong>[External NFS]</strong>: A network attached storage such as Azure Netapp Files, HPC Cache, or another VM running an NFS server, provides the mountpoint.</p><p>Note: the cluster must be terminated for this to take effect.</p>"
+        Order = 20
+
+
+        [[[parameter AdditonalNFSAddress]]]
+        Label = NFS IP Address 
+        Description = The IP address or hostname of the NFS server. Also accepts a list comma-separated addresses, for example, to mount a frontend load-balanced Azure HPC Cache.
+        Config.ParameterType = String
+
+        [[[parameter AdditionalNFSMountPoint]]]
+        Label = NFS Mount Point
+        Description = The path at which to mount the Filesystem
+        DefaultValue = /sched
+        Conditions.Hidden:=true
+
+        [[[parameter AdditionalNFSExportPath]]]
+        Label = NFS Export Path
+        Description = The path exported by the file system
+        DefaultValue = ""
+
+        [[[parameter AdditionalNFSMountOptions]]]
+        Label = NFS Mount Options
+        Description = NFS Client Mount Options
+        Config.ParameterType = String
+
+
+[parameters Advanced Settings]
+Order = 20
+
+    [[parameters Azure Settings]]
+    Order = 10 
+
+        [[[parameter Credentials]]]
+        Description = The credentials for the cloud provider
+        ParameterType = Cloud.Credentials
+
+        [[[parameter ManagedIdentity]]]
+        Label = Managed Id
+        Description = Optionally assign an Azure user assigned managed identity to all nodes to access Azure resources using assigned roles.
+        ParameterType = Azure.ManagedIdentity
+        DefaultValue = =undefined
+
+        [[[parameter BootDiskSize]]]
+        Description = Optional: Size of the OS/boot disk in GB for all nodes in the cluster (leave at 0 to use Image size)
+        ParameterType = Integer
+        Config.Plugin = pico.form.NumberTextBox
+        Config.MinValue = 0
+        Config.MaxValue = 32,000
+        Config.IntegerOnly = true
+        Config.Increment = 64
+        DefaultValue = 0
+
+
+
+    [[parameters Software]]
+    Description = "Specify the scheduling software, and base OS installed on all nodes, and optionally the cluster-init and chef versions from your locker."
+    Order = 10
+
+        [[[parameter ImageName]]]
+        Label = Compute OS
+        ParameterType = Cloud.Image
+        Config.OS = linux
+        DefaultValue = almalinux8
+        Config.Filter := Package in {"cycle.image.centos7", "almalinux8"}
+
+        [[[parameter PBSVersion]]]
+        Label = Altair PBS Version
+        Config.Plugin = pico.form.Dropdown
+        Config.Entries := {[Label="Altair PBS Pro 2022.1.1"; Value="2022.1.1"], [Label="Altair PBS Pro 2022.1.4"; Value="2022.1.4"]}
+        DefaultValue = 2022.1.4
+
+        [[[parameter PBSLicenseServer]]]
+        Label = Altair License Server location
+        Description = Altair License Server location 
+        Required = True
+
+        [[[parameter serverClusterInitSpecs]]]
+        Label = Server Cluster-Init
+        DefaultValue = =undefined
+        Description = Cluster init specs to apply to the server node
+        ParameterType = Cloud.ClusterInitSpecs
+    
+        [[[parameter ExecuteClusterInitSpecs]]]
+        Label = Execute Cluster-Init
+        DefaultValue = =undefined
+        Description = Cluster init specs to apply to execute nodes
+        ParameterType = Cloud.ClusterInitSpecs
+
+        [[[parameter NumberLoginNodes]]]
+        Label = Num Login Nodes
+        DefaultValue = 0
+        Description = Number of optional login nodes to create.
+        Config.Plugin = pico.form.NumberTextBox
+        Config.MinValue = 0
+        Config.MaxValue = 10000
+        Config.IntegerOnly = true
+	
+
+    [[parameters Advanced Networking]]
+
+        [[[parameter ReturnProxy]]]
+        Label = Return Proxy
+        DefaultValue = true
+        ParameterType = Boolean
+        Config.Label = Use SSH tunnel to connect to CycleCloud (required if direct access is blocked)
+
+        [[[parameter UsePublicNetwork]]]
+        Label = Public Head Node
+        DefaultValue = true
+        ParameterType = Boolean
+        Config.Label = Access server node from the Internet
+
+        [[[parameter ExecuteNodesPublic]]]
+        Label = Public Execute
+        DefaultValue = false
+        ParameterType = Boolean
+        Config.Label = Access execute nodes from the Internet
+        Conditions.Excluded := UsePublicNetwork isnt true
+
+    [[parameters Node Health Checks]]
+        Description = "Section for configuring Node Health Checks"
+        Order = 12
+
+            [[[parameter EnableNodeHealthChecks]]]
+            Label = Enable NHC tests
+            DefaultValue = false
+            Widget.Plugin = pico.form.BooleanCheckBox
+            Widget.Label = Run Node Health Checks on startup
