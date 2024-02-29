@@ -21,6 +21,7 @@ Autoscale = $Autoscale
     
         [[[configuration]]]
         pbspro.version = $PBSVersion
+        pbspro.install = true
         pbspro.professional = true
         pbspro.license = $PBSLicenseServer
         # For fast spin-up after Deallocate, force an immediate re-converge on boot

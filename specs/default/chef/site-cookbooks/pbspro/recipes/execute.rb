@@ -2,87 +2,91 @@
 # Licensed under the MIT License.
 #
 include_recipe 'pbspro::_updatehostname'
-include_recipe 'pbspro::default'
 
-pbsprover = node[:pbspro][:version]
+if node[:pbspro][:install]
 
-plat_ver = node['platform_version'].to_i
-platform = node['platform_family']
-pbsdist = "el#{plat_ver}"
-package_name = node[:pbspro][:package]
-pbs_professional = node[:pbspro][:professional]
+  include_recipe 'pbspro::default'
+
+  pbsprover = node[:pbspro][:version]
+
+  plat_ver = node['platform_version'].to_i
+  platform = node['platform_family']
+  pbsdist = "el#{plat_ver}"
+  package_name = node[:pbspro][:package]
+  pbs_professional = node[:pbspro][:professional]
 
 
-if pbs_professional
-  package_name = "pbspro-execution-#{pbsprover}.#{pbsdist}.x86_64.rpm"
-else
-  if package_name == nil
-    if pbsprover.to_i < 20 
-      package_name = "pbspro-execution-#{pbsprover}.x86_64.rpm"
-    else
-      package_name = "openpbs-execution-#{pbsprover}.x86_64.rpm"
+  if pbs_professional
+    package_name = "pbspro-execution-#{pbsprover}.#{pbsdist}.x86_64.rpm"
+  else
+    if package_name == nil
+      if pbsprover.to_i < 20 
+        package_name = "pbspro-execution-#{pbsprover}.x86_64.rpm"
+      else
+        package_name = "openpbs-execution-#{pbsprover}.x86_64.rpm"
+      end
     end
   end
-end
 
-jetpack_download package_name do
-  project 'pbspro'
-end
-
-package package_name do
-  source "#{node['jetpack']['downloads']}/#{package_name}"
-  action :install
-end
-
-nodearray = node[:cyclecloud][:node][:template] || "execute"
-slot_type = node[:pbspro][:slot_type] || nodearray
-machinetype = node[:azure][:metadata][:compute][:vmSize]
-
-placement_group = node[:cyclecloud][:node][:placement_group_id] || node[:cyclecloud][:node][:placement_group] || nil
-is_node_grouped = node[:pbspro][:is_hpc] || !placement_group.nil?
-instance_id = node[:cyclecloud][:instance][:id]
-
-custom_resources = Hash.new {}
-if node[:autoscale] then
-    custom_resources = node[:autoscale].to_h
-end
-
-schedint = (node[:pbspro][:scheduler] || cluster.scheduler).split(".").first
-slots = node[:pbspro][:slots] || nil
-
-if schedint != nil
-  template "/var/spool/pbs/server_name" do
-    source "server_name_exec.erb"
-    mode "0644"
-    owner "root"
-    group "root"
-    variables(:servername => schedint)
+  jetpack_download package_name do
+    project 'pbspro'
   end
 
-  template "/var/spool/pbs/mom_priv/config" do
-    source "mom_config.erb"
-    mode "0644"
-    owner "root"
-    group "root"
-    variables(:servername => schedint)
+  package package_name do
+    source "#{node['jetpack']['downloads']}/#{package_name}"
+    action :install
   end
 
-  template "/etc/pbs.conf" do
-    source "pbs.conf.erb"
-    mode "0644"
+  nodearray = node[:cyclecloud][:node][:template] || "execute"
+  slot_type = node[:pbspro][:slot_type] || nodearray
+  machinetype = node[:azure][:metadata][:compute][:vmSize]
+
+  placement_group = node[:cyclecloud][:node][:placement_group_id] || node[:cyclecloud][:node][:placement_group] || nil
+  is_node_grouped = node[:pbspro][:is_hpc] || !placement_group.nil?
+  instance_id = node[:cyclecloud][:instance][:id]
+
+  custom_resources = Hash.new {}
+  if node[:autoscale] then
+      custom_resources = node[:autoscale].to_h
+  end
+
+  schedint = (node[:pbspro][:scheduler] || cluster.scheduler).split(".").first
+  slots = node[:pbspro][:slots] || nil
+
+  if schedint != nil
+    template "/var/spool/pbs/server_name" do
+      source "server_name_exec.erb"
+      mode "0644"
+      owner "root"
+      group "root"
+      variables(:servername => schedint)
+    end
+
+    template "/var/spool/pbs/mom_priv/config" do
+      source "mom_config.erb"
+      mode "0644"
+      owner "root"
+      group "root"
+      variables(:servername => schedint)
+    end
+
+    template "/etc/pbs.conf" do
+      source "pbs.conf.erb"
+      mode "0644"
+      owner "root"
+      group "root"
+      variables(:servername => schedint)
+    end
+  end
+
+
+  cookbook_file "/var/spool/pbs/modify_limits.sh" do
+    source "modify_limits.sh"
+    mode "0755"
     owner "root"
     group "root"
-    variables(:servername => schedint)
+    action :create
   end
-end
-
-
-cookbook_file "/var/spool/pbs/modify_limits.sh" do
-  source "modify_limits.sh"
-  mode "0755"
-  owner "root"
-  group "root"
-  action :create
 end
 
 node_created_guard = "#{node['cyclecloud']['chefstate']}/pbs.nodecreated"

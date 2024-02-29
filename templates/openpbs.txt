@@ -20,6 +20,7 @@ Autoscale = $Autoscale
     
         [[[configuration]]]
         pbspro.version = $PBSVersion
+        pbspro.install = true
         pbspro.professional = false
         # For fast spin-up after Deallocate, force an immediate re-converge on boot
         cyclecloud.converge_on_boot = true
