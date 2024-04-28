@@ -4,7 +4,7 @@
 # Recipe:: _updatehostname
 #
 
-if !node[:cyclecloud][:hosts][:standalone_dns]
+if node[:cyclecloud][:hosts][:standalone_dns] == false
   template "/tmp/update_hostname.py" do
     source "update_hostname.py.erb"
     mode "0644"
