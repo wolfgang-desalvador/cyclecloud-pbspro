@@ -17,7 +17,10 @@ node_number = node_name.split('-')[-1]
 node_prefix = hostname_update_config['node_name_prefix']
 cluster_name = cluster_config['name']
 
-if node_prefix == "Cluster Prefix":
+
+if 'server' in node_name:
+    targetHostname = cluster_name + '-scheduler'
+elif node_prefix == "Cluster Prefix":
     targetHostname = '-'.join([cluster_name, node_template, node_number])
 else:
     targetHostname = '-'.join([node_prefix, node_template, node_number])
