@@ -16,9 +16,9 @@ config = json.loads(subprocess.check_output(["/opt/cycle/jetpack/bin/jetpack", "
 
 vaultURL = "https://" + config["hostname_update"]["hostname_key_vault_name"]  + ".vault.azure.net"
 hostnameUpdateScriptName = config["hostname_update"]["hostname_update_secret_name"]
-hostnameUpdateScriptPath = config["pbspro"]["hostname_update_script_path"]
+hostnameUpdateScriptPath = config["hostname_update"]["hostname_update_script_path"]
 hostnameRemoveScriptName = config["hostname_update"]["hostname_remove_secret_name"]
-hostnameRemoveScriptPath = config["pbspro"]["hostname_remove_script_path"]
+hostnameRemoveScriptPath = config["hostname_update"]["hostname_remove_script_path"]
 
 credential = DefaultAzureCredential()
 client = SecretClient(vault_url=vaultURL, credential=credential)

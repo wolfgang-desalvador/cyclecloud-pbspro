@@ -5,7 +5,7 @@
 #
 
 if node[:cyclecloud][:hosts][:standalone_dns][:enabled] == false
-  template "/tmp/hostname_update_handler.py" do
+  template node[:hostname_update][:handler_path] do
     source "hostname_update_handler.py.erb"
     mode "0644"
     owner "root"
@@ -15,12 +15,12 @@ if node[:cyclecloud][:hosts][:standalone_dns][:enabled] == false
   bash "run external hostname handler" do
     code <<-EOF
     yum install -y python3 python3-virtualenv
-    /usr/bin/python3 -m venv auth /opt/cycle/hostname/
-    source /opt/cycle/hostname/bin/activate
-    /opt/cycle/hostname/bin/python -m pip install --upgrade pip
-    /opt/cycle/hostname/bin/python -m pip install azure-keyvault-secrets azure-identity
-    /opt/cycle/hostname/bin/python /tmp/hostname_update_handler.py
-  EOF
+    /usr/bin/python3 -m venv auth #{node[:hostname_update][:environment_path]}
+    source #{node[:hostname_update][:environment_path]}/bin/activate
+    #{node[:hostname_update][:environment_path]}/bin/python -m pip install --upgrade pip
+    #{node[:hostname_update][:environment_path]}/bin/python -m pip install azure-keyvault-secrets azure-identity
+    #{node[:hostname_update][:environment_path]}/bin/python #{node[:hostname_update][:handler_path]}
+    EOF
   end
 end
 
