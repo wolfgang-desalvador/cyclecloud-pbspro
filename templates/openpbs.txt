@@ -38,6 +38,10 @@ Autoscale = $Autoscale
         cyclecloud.hosts.standalone_dns.enabled = ${ExternalDNS==false}
         cyclecloud.hosts.simple_vpc_dns.enabled = ${ExternalDNS==false}
 
+        # Hostname update script
+        hostname_update.key_vault_name = $hostname_key_vault_name
+        hostname_update.hostname_update_secret_name = $hostname_update_secret_name
+
         # May be used to identify the ID in cluster-init scripts
         cluster.identities.default = $ManagedIdentity
 	
@@ -143,7 +147,7 @@ Autoscale = $Autoscale
     Interruptible = $UseLowPrio
     AdditionalClusterInitSpecs = $ExecuteClusterInitSpecs
     EnableNodeHealthChecks = $EnableNodeHealthChecks
-
+    NodeNamePrefix = $NodeNamePrefix
 
         [[[configuration]]]
         # setting this completely disables the autoscaler from adding nodes to the cluster
@@ -377,8 +381,8 @@ Order = 20
     Order = 10
 
         [[[parameter ExternalDNS]]]
-        Label = ExternalDNSSupport
-        Description = Enable ExternalDNSSupport
+        Label = External DNS Support
+        Description = Enable External DNS Support
         ParameterType = Boolean
         DefaultValue = false
 

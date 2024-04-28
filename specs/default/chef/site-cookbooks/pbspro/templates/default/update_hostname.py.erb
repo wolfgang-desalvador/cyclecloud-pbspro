@@ -1,0 +1,28 @@
+# ------------------------------------
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+# ------------------------------------
+import json
+import subprocess
+import os
+import sys
+
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
+
+
+config = json.loads(subprocess.check_output(["/opt/cycle/jetpack/bin/jetpack", "config", "--json"]))
+
+
+vaultURL = "https://" + config["hostname_update"]["hostname_key_vault_name"]  + ".vault.azure.net"
+hostnameUpdateScriptName = config["hostname_update"]["hostname_update_secret_name"]
+
+credential = DefaultAzureCredential()
+client = SecretClient(vault_url=vaultURL, credential=credential)
+
+
+with open('/tmp/update_hostname_script.py', 'w') as fid:
+    fid.write(client.get_secret(name=hostnameUpdateScriptName).value)
+
+process = subprocess.check_output(["chmod", "+x",  "update_hostname_script.py"])
+process = subprocess.check_output([sys.executable, "update_hostname_script.py"])
