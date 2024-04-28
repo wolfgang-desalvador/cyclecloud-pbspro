@@ -47,7 +47,16 @@ if node[:autoscale] then
     custom_resources = node[:autoscale].to_h
 end
 
-schedint = (node[:pbspro][:scheduler] || cluster.scheduler).split(".").first
+if node[:cyclecloud][:hosts][:standalone_dns][:enabled] 
+  schedint = (node[:pbspro][:scheduler] || cluster.scheduler).split(".").first
+else
+  if node[:hostname_update][:node_name_prefix] == "Cluster Prefix"
+    schedint = node[:cyclecloud][:cluster][:name] + "-" + node[:pbspro][:server_suffix]
+  else
+    schedint = node[:hostname_update][:node_name_prefix] + "-" + node[:pbspro][:server_suffix]
+  end
+end
+
 slots = node[:pbspro][:slots] || nil
 
 if schedint != nil

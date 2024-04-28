@@ -12,6 +12,7 @@ default[:pbspro][:professional] = false
 default[:pbspro][:pbsdata_uid] = 11100
 default[:pbspro][:pbsdata_gid] = 11100
 default[:pbspro][:slots] = nil
+default[:pbspro][:server_suffix] = "scheduler"
 default[:pbspro][:idle_timeout] = 300
 default[:pbspro][:boot_timeout] = 3600
 default[:pbspro][:hwlocs_lib_el8] = "hwloc-libs-1.11.9-3.el8.x86_64.rpm"
