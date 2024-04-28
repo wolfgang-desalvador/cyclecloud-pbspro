@@ -16,13 +16,21 @@ config = json.loads(subprocess.check_output(["/opt/cycle/jetpack/bin/jetpack", "
 
 vaultURL = "https://" + config["hostname_update"]["hostname_key_vault_name"]  + ".vault.azure.net"
 hostnameUpdateScriptName = config["hostname_update"]["hostname_update_secret_name"]
+hostnameUpdateScriptPath = config["pbspro"]["hostname_update_script_path"]
+hostnameRemoveScriptName = config["hostname_update"]["hostname_remove_secret_name"]
+hostnameRemoveScriptPath = config["pbspro"]["hostname_remove_script_path"]
 
 credential = DefaultAzureCredential()
 client = SecretClient(vault_url=vaultURL, credential=credential)
 
 
-with open('/tmp/update_hostname_script.py', 'w') as fid:
+with open(hostnameUpdateScriptPath, 'w') as fid:
     fid.write(client.get_secret(name=hostnameUpdateScriptName).value)
 
-process = subprocess.check_output(["chmod", "+x",  "/tmp/update_hostname_script.py"])
-process = subprocess.check_output([sys.executable, "/tmp/update_hostname_script.py"])
+process = subprocess.check_output(["chmod", "700",  hostnameUpdateScriptPath])
+process = subprocess.check_output([sys.executable, hostnameUpdateScriptPath])
+
+with open(hostnameRemoveScriptPath, 'w') as fid:
+    fid.write(client.get_secret(name=hostnameRemoveScriptName).value)
+
+process = subprocess.check_output(["chmod", "700",  hostnameRemoveScriptPath])

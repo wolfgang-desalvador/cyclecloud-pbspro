@@ -24,7 +24,7 @@ else:
     prefix = node_prefix
 
 if 'server' in node_name:
-    targetHostname = prefix + server_suffix
+    targetHostname = prefix + "-" + server_suffix
 else:
     targetHostname = '-'.join([prefix, node_template, node_number])
 

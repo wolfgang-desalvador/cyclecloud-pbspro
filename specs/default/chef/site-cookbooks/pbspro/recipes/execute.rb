@@ -98,19 +98,19 @@ node_created_guard = "#{node['cyclecloud']['chefstate']}/pbs.nodecreated"
 
 bash "await-joining-cluster" do
   code lazy { <<-EOF 
-    node_attrs=$(/opt/pbs/bin/pbsnodes #{node[:hostname]})
+    node_attrs=$(/opt/pbs/bin/pbsnodes $(hostname))
     if [ $? != 0 ]; then
-        echo "#{node[:hostname]} is not in the cluster yet. Retrying next converge" 1>&2
+        echo "$(hostname) is not in the cluster yet. Retrying next converge" 1>&2
         exit 1
     fi
 
     echo $node_attrs | grep -qi #{node[:cyclecloud][:node][:id]}
     if [ $? != 0 ]; then
-      echo "Stale entry found for #{node[:hostname]}. Waiting for autoscaler to update this before joining." 1>&2
+      echo "Stale entry found for $(hostname). Waiting for autoscaler to update this before joining." 1>&2
       exit 1
     fi
 
-    /opt/pbs/bin/pbsnodes -o #{node[:hostname]} -C 'cyclecloud offline' && touch #{node_created_guard}}
+    /opt/pbs/bin/pbsnodes -o $(hostname) -C 'cyclecloud offline' && touch #{node_created_guard}}
     EOF
     }
   not_if {::File.exist?(node_created_guard)}
