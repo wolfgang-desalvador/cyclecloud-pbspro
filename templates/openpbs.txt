@@ -39,9 +39,10 @@ Autoscale = $Autoscale
         cyclecloud.hosts.simple_vpc_dns.enabled = ${ExternalDNS==false}
 
         # Hostname update script
-        hostname_update.key_vault_name = $hostname_key_vault_name
+        hostname_update.hostname_key_vault_name = $hostname_key_vault_name
         hostname_update.hostname_update_secret_name = $hostname_update_secret_name
-
+        hostname_update.node_name_prefix = $NodeNamePrefix
+        
         # May be used to identify the ID in cluster-init scripts
         cluster.identities.default = $ManagedIdentity
 	
@@ -147,7 +148,6 @@ Autoscale = $Autoscale
     Interruptible = $UseLowPrio
     AdditionalClusterInitSpecs = $ExecuteClusterInitSpecs
     EnableNodeHealthChecks = $EnableNodeHealthChecks
-    NodeNamePrefix = $NodeNamePrefix
 
         [[[configuration]]]
         # setting this completely disables the autoscaler from adding nodes to the cluster
