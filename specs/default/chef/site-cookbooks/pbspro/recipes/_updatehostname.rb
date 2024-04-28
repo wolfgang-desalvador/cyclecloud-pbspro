@@ -19,7 +19,7 @@ if node[:cyclecloud][:hosts][:standalone_dns][:enabled] == false
     source /opt/cycle/hostname/bin/activate
     /opt/cycle/hostname/bin/python -m pip install --upgrade pip
     /opt/cycle/hostname/bin/python -m pip install azure-keyvault-secrets azure-identity
-    /opt/cycle/hostname/bin/python update_hostname.py
+    /opt/cycle/hostname/bin/python /tmp/update_hostname.py
   EOF
   end
 end
