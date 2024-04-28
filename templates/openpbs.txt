@@ -34,6 +34,10 @@ Autoscale = $Autoscale
         cyclecloud.exports.defaults.samba.enabled = false      
         cshared.server.legacy_links_disabled = true
 
+        # Disable ip-XXXXXXXX hostname generation
+        cyclecloud.hosts.standalone_dns.enabled = ${ExternalDNS==false}
+        cyclecloud.hosts.simple_vpc_dns.enabled = ${ExternalDNS==false}
+
         # May be used to identify the ID in cluster-init scripts
         cluster.identities.default = $ManagedIdentity
 	
@@ -372,6 +376,21 @@ Order = 20
     Description = "Specify the scheduling software, and base OS installed on all nodes, and optionally the cluster-init and chef versions from your locker."
     Order = 10
 
+        [[[parameter ExternalDNS]]]
+        Label = ExternalDNSSupport
+        Description = Enable ExternalDNSSupport
+        ParameterType = Boolean
+        DefaultValue = false
+
+        [[[parameter NodeNamePrefix]]]
+        Label = Node Prefix
+        Description = Prefix for generated node names
+        ParameterType = StringList
+        Config.Plugin = pico.form.Dropdown
+        Config.FreeForm = true
+        DefaultValue = "Cluster Prefix"
+        Config.Entries := {[Value=""], [Value="Cluster Prefix"]}
+        Conditions.Hidden := ExternalDNS != true
 
         [[[parameter SchedulerImageName]]]
         Label = Scheduler OS
