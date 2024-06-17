@@ -314,7 +314,7 @@ This example will use the 2022.1.1 version, which has been tested with the templ
 
 2. A license server reachable from Azure CycleCloud Altair PBS Professional head node and execution nodes
 
-3. (Optional to tune avilable versions) The cyclecloud cli must be configured. Documentation is available [here](https://docs.microsoft.com/en-us/azure/cyclecloud/install-cyclecloud-cli) 
+3. (Optional to tune available versions) The cyclecloud cli must be configured. Documentation is available [here](https://docs.microsoft.com/en-us/azure/cyclecloud/install-cyclecloud-cli) 
 
 
 ### Copy the binaries into the cloud locker
