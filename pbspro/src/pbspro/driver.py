@@ -1,6 +1,7 @@
 import datetime
 import os
 import re
+import subprocess
 import socket
 from functools import lru_cache
 from subprocess import CalledProcessError, SubprocessError
@@ -86,6 +87,10 @@ class PBSProDriver(SchedulerDriver):
             )
         return self.__read_only_resources
 
+    @property
+    def node_domain(self) -> str:
+        return self.config.get("domain", "")
+    
     def initialize(self) -> None:
         """
         Placeholder for subclasses to customize initialization
@@ -365,7 +370,7 @@ class PBSProDriver(SchedulerDriver):
                                 "%s is offline. Setting it back to online", node
                             )
                             self.pbscmd.pbsnodes(
-                                "-r", node.hostname, "-C", "cyclecloud restored"
+                                "-r", "{}".format(node.hostname) + self.node_domain, "-C", "cyclecloud restored"
                             )
                         else:
                             logging.fine(
@@ -380,7 +385,12 @@ class PBSProDriver(SchedulerDriver):
                     logging.info(
                         "%s does not exist in this cluster yet. Creating.", node
                     )
-                    self.pbscmd.qmgr("create", "node", node.hostname)
+                    
+                    self.pbscmd.qmgr("create", "node", node.hostname, "Mom={}".format(node.hostname) + self.node_domain)
+                    if self.config.get("cloudResources"):
+                        cloudResources = self.config.get("cloudResources")
+                        for resource in cloudResources:
+                            self.pbscmd.qmgr("set", "node", node.hostname, "resources_available.{}+={}".format(resource, cloudResources[resource]))
 
                 for res_name, res_value in node.resources.items():
                     # we set ccnodeid last, so that we can see that we have completely joined a node
@@ -435,7 +445,7 @@ class PBSProDriver(SchedulerDriver):
                         "ccnodeid", node.resources["ccnodeid"]
                     ),
                 )
-                self.pbscmd.pbsnodes("-r", node.hostname, "-C", "cyclecloud joined")
+                self.pbscmd.pbsnodes("-r", "{}".format(node.hostname) + self.node_domain, "-C", "cyclecloud joined")
                 ret.append(node)
             except SubprocessError as e:
                 logging.error(
@@ -504,7 +514,7 @@ class PBSProDriver(SchedulerDriver):
                         )
                 try:
                     self.pbscmd.pbsnodes(
-                        "-o", node.hostname, "-C", "cyclecloud offline"
+                       "-o", "{}".format(node.hostname) + self.node_domain, "-C", "cyclecloud offline"
                     )
                     node.metadata["_marked_offline_this_iteration_"] = True
 
@@ -524,6 +534,11 @@ class PBSProDriver(SchedulerDriver):
                             e,
                         )
         return ret
+
+    def delete_host_name(self, hostname: str) -> None:
+        remove_dns_script = self.config.get("removeDNSScript", None)
+        if remove_dns_script:
+            subprocess.check_output([remove_dns_script, hostname])
 
     def handle_post_delete(self, nodes: List[Node]) -> List[Node]:
         ret = []
@@ -546,6 +561,7 @@ class PBSProDriver(SchedulerDriver):
                 self.pbscmd.qmgr("delete", "node", node.hostname)
                 node.metadata["pbs_state"] = "deleted"
                 ret.append(node)
+                self.delete_host_name(node.hostname)
             except CalledProcessError as e:
                 logging.error(
                     "Could not remove %s from cluster: %s. Will retry next cycle.",

@@ -34,10 +34,15 @@ subprocess.check_output(['systemctl', 'restart', 'NetworkManager'])
 
 seconds = 0
 while True:
-    if targetHostname not in subprocess.check_output(['nslookup', ip_address]).decode():
-        print('Hostname not registered in DNS yet. Wait 2 seconds ...')
-        time.sleep(2)
-        seconds += 2
-    else:
-        print('Hostname successfully registered in {} seconds'.format(seconds))
-        break
+    try:
+        nslookupOutput = subprocess.check_output(['nslookup', ip_address]).decode()
+        if targetHostname in nslookupOutput:
+            print('Hostname successfully registered in {} seconds'.format(seconds))
+            break
+    except subprocess.CalledProcessError as exception:
+        continue
+    
+    print('Hostname not registered in DNS yet. Wait 2 seconds ...')
+    time.sleep(2)
+    seconds += 2
+

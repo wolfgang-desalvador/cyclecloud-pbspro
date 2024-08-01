@@ -41,6 +41,7 @@ Autoscale = $Autoscale
         # Hostname update script
         hostname_update.hostname_key_vault_name = $hostname_key_vault_name
         hostname_update.hostname_update_secret_name = $hostname_update_secret_name
+        hostname_update.hostname_remove_secret_name = $hostname_remove_secret_name
         hostname_update.node_name_prefix = $NodeNamePrefix
         
         # May be used to identify the ID in cluster-init scripts
@@ -394,6 +395,27 @@ Order = 20
         Config.FreeForm = true
         DefaultValue = "Cluster Prefix"
         Config.Entries := {[Value=""], [Value="Cluster Prefix"]}
+        Conditions.Hidden := ExternalDNS != true
+
+        [[[parameter hostname_key_vault_name]]]
+        Label = Key Vault Name
+        Description = Key vault name containing DNS update scripts
+        ParameterType = String
+        DefaultValue = ""
+        Conditions.Hidden := ExternalDNS != true
+
+        [[[parameter hostname_update_secret_name]]]
+        Label = Update Script Secret Name
+        Description = Update scripts secret name inside Key Vault
+        ParameterType = String
+        DefaultValue = ""
+        Conditions.Hidden := ExternalDNS != true
+
+        [[[parameter hostname_remove_secret_name]]]
+        Label = Remove Script Secret Name
+        Description = Remove scripts secret name inside Key Vault
+        ParameterType = String
+        DefaultValue = ""
         Conditions.Hidden := ExternalDNS != true
 
         [[[parameter SchedulerImageName]]]
